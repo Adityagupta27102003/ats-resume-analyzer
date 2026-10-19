@@ -2,12 +2,14 @@
 
 Score a resume against a job description the way an Applicant Tracking System would, and get specific, prioritised fixes.
 
-**Live demo:** _coming soon_ · **API docs:** _coming soon_
+**Live demo:** [ats-resume-analyzer-flax-mu.vercel.app](https://ats-resume-analyzer-flax-mu.vercel.app) · **API docs:** [ats-resume-api-p2fx.onrender.com/docs](https://ats-resume-api-p2fx.onrender.com/docs)
+
+> The API runs on Render's free tier and sleeps when idle. The first request after a while can take ~1 minute to wake it up.
 
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
-![Tests](https://img.shields.io/badge/tests-46%20passing-brightgreen)
+[![tests](https://github.com/Adityagupta27102003/ats-resume-analyzer/actions/workflows/tests.yml/badge.svg)](https://github.com/Adityagupta27102003/ats-resume-analyzer/actions/workflows/tests.yml)
 
 ## What it does
 

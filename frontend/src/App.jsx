@@ -7,7 +7,7 @@ import History from './components/History.jsx'
 import AuthModal from './components/AuthModal.jsx'
 import { Keywords, Requirements, ResumeChecks, Suggestions } from './components/Details.jsx'
 
-const REPO_URL = 'https://github.com/'
+const REPO_URL = 'https://github.com/Adityagupta27102003/ats-resume-analyzer'
 
 function Results({ result }) {
   return (
