@@ -27,6 +27,12 @@ export default function AuthModal({ onClose }) {
     setLoading(false)
 
     if (error) return setError(error.message)
+    // Signing up an already-registered email "succeeds" without sending anything (Supabase
+    // hides which emails exist); the tell is a user with no identities.
+    if (mode === 'signup' && data.user?.identities?.length === 0) {
+      setMode('signin')
+      return setError('An account with this email already exists. Sign in with your password instead.')
+    }
     // With email confirmation enabled, signUp returns a user but no session yet.
     if (mode === 'signup' && !data.session) {
       return setNotice('Check your inbox to confirm your email, then sign in.')
