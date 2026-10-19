@@ -30,7 +30,7 @@ Upload a PDF/DOCX resume and paste a job description. The analyzer returns:
 
 If a JD contains no recognisable hard skills, the keyword component is dropped and its weight is redistributed proportionally, so the score stays on a 0–100 scale.
 
-**LLM parsing with a local fallback.** When a Groq API key is set, Llama 3.3 70B extracts structured data (required vs. preferred skills, responsibilities, job title) from both documents in parallel, using JSON mode with one retry. If Groq is down or rate-limited, every step falls back to local spaCy/regex extraction, so an LLM outage never breaks an analysis. The response says which parser was used.
+**LLM parsing with a local fallback.** When a Groq API key is set, an LLM (`openai/gpt-oss-120b` on Groq, configurable via `GROQ_MODEL`) extracts structured data (required vs. preferred skills, responsibilities, job title) from both documents in parallel, using JSON mode with one retry. If Groq is down or rate-limited, every step falls back to local spaCy/regex extraction, so an LLM outage never breaks an analysis. The response says which parser was used.
 
 ## Architecture
 
@@ -39,7 +39,7 @@ flowchart LR
     U[React + Vite<br/>Vercel] -->|multipart upload + JWT| A[FastAPI<br/>HF Spaces · Docker]
     U -->|email/password login| S[(Supabase Auth)]
     A --> P[pdfplumber / PyPDF2<br/>python-docx]
-    A --> G[Groq · Llama 3.3<br/>structured parsing]
+    A --> G[Groq LLM<br/>structured parsing]
     A --> M[spaCy + MiniLM<br/>scoring engine]
     A -->|verify token, save/read history| DB[(Supabase Postgres<br/>RLS enabled)]
 ```

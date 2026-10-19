@@ -4,12 +4,11 @@ from typing import Dict
 
 from groq import Groq
 
-from backend.core.config import GROQ_API_KEY
+from backend.core.config import GROQ_API_KEY, GROQ_MODEL
 
 logger=logging.getLogger('ats_resume_scorer')
 
 
-GROQ_MODEL='llama-3.3-70b-versatile'
 MAX_INPUT_CHARS=15000   # ~4k tokens; resumes/JDs longer than this are almost always junk
 
 _client=None
@@ -89,6 +88,9 @@ def _call_groq(client:Groq, system_prompt:str, user_prompt:str)->str:
         temperature=0.0,
         max_tokens=4096,
         response_format={'type': 'json_object'},   # JSON mode: model must emit a valid JSON object
+        # gpt-oss models "think" before answering; extraction needs little reasoning, and
+        # a low effort keeps latency down and leaves the token budget for the JSON.
+        **({'reasoning_effort': 'low'} if GROQ_MODEL.startswith('openai/gpt-oss') else {}),
     )
 
     return response.choices[0].message.content.strip()

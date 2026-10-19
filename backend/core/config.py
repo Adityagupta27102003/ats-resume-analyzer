@@ -61,3 +61,5 @@ SUPABASE_URL       = os.getenv('SUPABASE_URL', '')
 SUPABASE_KEY       = os.getenv('SUPABASE_KEY', '')          # secret/service_role — DB writes (bypasses RLS)
 SUPABASE_ANON_KEY  = os.getenv('SUPABASE_ANON_KEY', '')     # publishable/anon — used to verify user tokens
 GROQ_API_KEY       = os.getenv('GROQ_API_KEY', '')
+# Groq retires models regularly (llama-3.3-70b-versatile was removed), so this is overridable.
+GROQ_MODEL         = os.getenv('GROQ_MODEL', 'openai/gpt-oss-120b')
