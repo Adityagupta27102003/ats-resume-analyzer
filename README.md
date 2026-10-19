@@ -24,7 +24,7 @@ Upload a PDF/DOCX resume and paste a job description. The analyzer returns:
 | Component | Weight | How it's computed |
 |---|---|---|
 | Keywords | 35% | Hard skills in the JD vs. the resume. Required skills count double. Matching handles aliases (`k8s` → Kubernetes, `ReactJS` → React) via a curated skill vocabulary + spaCy `PhraseMatcher`, then fuzzy matching (rapidfuzz) for variants like "RESTful APIs". |
-| Semantic | 30% | Each JD requirement and each resume line is embedded with **all-MiniLM-L6-v2** (a distilled BERT sentence-transformer). For every requirement, the best cosine similarity across resume lines is taken, then rescaled from the model's practical range (0.15–0.70) to 0–1. |
+| Semantic | 30% | Each JD requirement and each resume line is embedded with **all-MiniLM-L6-v2** (a distilled BERT sentence-transformer, run on ONNX Runtime). For every requirement, the best cosine similarity across resume lines is taken, then rescaled from the model's practical range (0.15–0.70) to 0–1. |
 | Content | 20% | Share of bullets starting with strong action verbs, number of quantified bullets (%, $, 10k…), penalty for weak phrases. |
 | Formatting | 15% | Email + phone, LinkedIn/GitHub, standard section headings (Experience, Education, Skills, Projects), word count in the 350–1100 range. |
 
@@ -36,7 +36,7 @@ If a JD contains no recognisable hard skills, the keyword component is dropped a
 
 ```mermaid
 flowchart LR
-    U[React + Vite<br/>Vercel] -->|multipart upload + JWT| A[FastAPI<br/>HF Spaces · Docker]
+    U[React + Vite<br/>Vercel] -->|multipart upload + JWT| A[FastAPI<br/>Render · Docker]
     U -->|email/password login| S[(Supabase Auth)]
     A --> P[pdfplumber / PyPDF2<br/>python-docx]
     A --> G[Groq LLM<br/>structured parsing]
@@ -51,13 +51,14 @@ flowchart LR
 - **Auth tokens are verified by Supabase itself** (`/auth/v1/user`). This works with both legacy HS256 and newer asymmetric signing keys, so the backend never handles the JWT secret.
 - **The secret key stays server-side.** The browser only holds the publishable key, and row-level security stops it from reading other users' rows.
 - **Errors are typed.** Validation/parsing errors carry a user-safe message (422). Anything unexpected is logged and returned as a generic 500, so internals never leak.
-- **Deployed on Hugging Face Spaces (Docker)**: torch + MiniLM need ~1 GB of RAM, which exceeds most free PaaS tiers. CPU-only torch and model weights baked into the image keep cold starts fast.
+- **BERT on ONNX Runtime instead of PyTorch.** The same MiniLM weights produce identical embeddings (cosine 1.0 against sentence-transformers), but the API runs in ~330 MB of RAM instead of ~1 GB, and the image drops PyTorch entirely. That's what lets it run on a 512 MB free instance. The weights are baked into the Docker image, so cold starts don't download anything.
+- **spaCy is used only for tokenization + `PhraseMatcher`**, so a blank English pipeline is loaded instead of `en_core_web_sm`. That's ~50 MB less of models the scorer never uses.
 
 ## Tech stack
 
-**Backend:** FastAPI, Pydantic v2, spaCy, sentence-transformers (MiniLM), rapidfuzz, pdfplumber, python-docx, Groq, httpx
+**Backend:** FastAPI, Pydantic v2, spaCy, MiniLM via fastembed / ONNX Runtime, rapidfuzz, pdfplumber, python-docx, Groq, httpx
 **Frontend:** React 19, Vite, Tailwind CSS v4, supabase-js
-**Infra:** Docker, Hugging Face Spaces, Vercel, Supabase (Auth + Postgres)
+**Infra:** Docker, Render, Vercel, Supabase (Auth + Postgres), GitHub Actions CI
 
 ## Run locally
 
@@ -65,9 +66,7 @@ Requires Python 3.11 and Node 20+.
 
 ```bash
 # Backend
-pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements-dev.txt
-python -m spacy download en_core_web_sm
 cp .env.example .env              # all keys optional for local dev
 uvicorn backend.main:app --reload # http://localhost:8000/docs
 
@@ -86,7 +85,7 @@ Without a Groq key the analyzer uses local parsing. Without Supabase, login and 
 
 ```bash
 docker build -t ats-backend .
-docker run -p 7860:7860 --env-file .env ats-backend
+docker run -p 8000:8000 -e PORT=8000 --env-file .env ats-backend
 ```
 
 ## Tests
@@ -121,6 +120,6 @@ frontend/src/
   App.jsx                 views: analyze / results / history
   components/             upload form, score summary, details, history, auth
 tests/                    pytest suite (scorer, parsers, API)
-deploy/                   Hugging Face Space deploy script
-Dockerfile
+Dockerfile                backend image (no PyTorch, model weights baked in)
+render.yaml               Render Blueprint for the API
 ```

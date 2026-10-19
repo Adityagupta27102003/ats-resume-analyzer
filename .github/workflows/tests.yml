@@ -14,8 +14,6 @@ jobs:
         with:
           python-version: '3.11'
           cache: pip
-      # CPU-only torch: the default wheel pulls ~2.5 GB of CUDA libraries the tests never use.
-      # No spaCy model download: tests use spacy.blank('en') and a fake embedder.
-      - run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+      # Tests use spacy.blank('en') and a fake embedder, so no model downloads are needed.
       - run: pip install -r requirements-dev.txt
       - run: pytest -q

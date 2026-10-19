@@ -8,8 +8,8 @@ from backend.core.config import(
     APP_DESCRIPTION,
     APP_TITLE,
     APP_VERSION,
-    SPACY_MODEL,
-    SENTENCE_TRANSFORMER_MODEL
+    EMBEDDING_CACHE_DIR,
+    EMBEDDING_MODEL,
 )
 from backend.api.routes import router
 import backend.utils.file_utils  # noqa: F401 — configures the app logger
@@ -22,14 +22,15 @@ async def lifespan(app:FastAPI):
     logger.info('Starting ATS Resume Analyzer API...')
 
     import spacy
-    from sentence_transformers import SentenceTransformer
+    from backend.services.embedder import OnnxEmbedder
     from backend.services.scorer import ATSScorer
 
-    logger.info(f'Loading spaCy model: {SPACY_MODEL}')
-    nlp = spacy.load(SPACY_MODEL, disable=['parser', 'ner', 'lemmatizer'])
+    # The scorer only needs spaCy's tokenizer + PhraseMatcher, so a blank English
+    # pipeline is enough — loading en_core_web_sm would add ~50 MB of unused models.
+    nlp = spacy.blank('en')
 
-    logger.info(f'Loading SentenceTransformer: {SENTENCE_TRANSFORMER_MODEL}')
-    embedder = SentenceTransformer(SENTENCE_TRANSFORMER_MODEL, device='cpu')
+    logger.info(f'Loading embedding model: {EMBEDDING_MODEL} (ONNX Runtime)')
+    embedder = OnnxEmbedder(EMBEDDING_MODEL, cache_dir=EMBEDDING_CACHE_DIR)
 
     app.state.scorer = ATSScorer(nlp, embedder)
     logger.info('All models loaded. API is ready to serve requests.')

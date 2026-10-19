@@ -41,8 +41,9 @@ SUPPORTED_EXTENSIONS = {'.pdf', '.docx'}
 MIN_JD_CHARS=50
 MAX_JD_CHARS=20000
 
-SPACY_MODEL="en_core_web_sm"
-SENTENCE_TRANSFORMER_MODEL = os.getenv("SENTENCE_TRANSFORMER_MODEL", "all-MiniLM-L6-v2")
+EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL', 'sentence-transformers/all-MiniLM-L6-v2')
+# Where the ONNX weights are cached; the Docker image bakes them in here.
+EMBEDDING_CACHE_DIR = os.getenv('EMBEDDING_CACHE_DIR') or None
 
 # Score component weights (sum = 100) — business logic treated as config
 SCORE_WEIGHTS = {
