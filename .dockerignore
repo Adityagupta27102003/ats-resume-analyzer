@@ -1,0 +1,12 @@
+# Only requirements.txt and backend/ are copied, but keep the build context small
+# and make sure secrets can never end up in an image layer.
+.env
+.env.*
+.git
+.vscode
+.idea
+.pytest_cache
+**/__pycache__
+frontend
+tests
+*.md
